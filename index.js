@@ -325,10 +325,15 @@ browserslist.checkName = function (name) {
 
 // Read and parse config
 browserslist.readConfig = function (file) {
+    if (file in _configCache) {
+        return _configCache[file];
+    }
     if ( !isFile(file) ) {
         error('Can\'t read ' + file + ' config');
     }
-    return browserslist.parseConfig(fs.readFileSync(file));
+    var config = browserslist.parseConfig(fs.readFileSync(file));
+    _configCache[file] = config;
+    return config;
 };
 
 // Find config, read file and parse it
