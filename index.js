@@ -44,6 +44,7 @@ function fillUsage(result, name, data) {
 }
 
 var _filenessCache = {};
+var _configCache = {};
 
 function isFile(file) {
     if (file in _filenessCache) {
@@ -86,10 +87,14 @@ function getStat(opts) {
 }
 
 function parsePackage(file) {
+    if (file in _configCache) {
+        return _configCache[file];
+    }
     var config = JSON.parse(fs.readFileSync(file)).browserslist;
     if ( typeof config === 'object' && config.length ) {
         config = { defaults: config };
     }
+    _configCache[file] = config;
     return config;
 }
 
