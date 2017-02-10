@@ -320,7 +320,7 @@ browserslist.checkName = function (name) {
 
 // Read and parse config
 browserslist.readConfig = function (file) {
-    if ( !fs.existsSync(file) || !fs.statSync(file).isFile() ) {
+    if ( !isFile(file) ) {
         error('Can\'t read ' + file + ' config');
     }
     return browserslist.parseConfig(fs.readFileSync(file));
