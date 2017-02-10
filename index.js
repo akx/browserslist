@@ -43,6 +43,9 @@ function fillUsage(result, name, data) {
     }
 }
 
+var cacheEnabled = !(
+    process && process.env && process.env.BROWSERSLIST_DISABLE_CACHE
+);
 var _filenessCache = {};
 var _configCache = {};
 
@@ -51,7 +54,9 @@ function isFile(file) {
         return _filenessCache[file];
     }
     var result = fs.existsSync(file) && fs.statSync(file).isFile();
-    _filenessCache[file] = result;
+    if (cacheEnabled) {
+        _filenessCache[file] = result;
+    }
     return result;
 }
 
@@ -94,7 +99,9 @@ function parsePackage(file) {
     if ( typeof config === 'object' && config.length ) {
         config = { defaults: config };
     }
-    _configCache[file] = config;
+    if (cacheEnabled) {
+        _configCache[file] = config;
+    }
     return config;
 }
 
@@ -332,7 +339,9 @@ browserslist.readConfig = function (file) {
         error('Can\'t read ' + file + ' config');
     }
     var config = browserslist.parseConfig(fs.readFileSync(file));
-    _configCache[file] = config;
+    if (cacheEnabled) {
+        _configCache[file] = config;
+    }
     return config;
 };
 
@@ -417,6 +426,12 @@ browserslist.parseConfig = function (string) {
         });
 
     return result;
+};
+
+// Clear internal caches
+browserslist.clearCaches = function () {
+    _filenessCache = {};
+    _configCache = {};
 };
 
 browserslist.queries = {
