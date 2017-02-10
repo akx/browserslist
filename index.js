@@ -43,8 +43,15 @@ function fillUsage(result, name, data) {
     }
 }
 
+var _filenessCache = {};
+
 function isFile(file) {
-    return fs.existsSync(file) && fs.statSync(file).isFile();
+    if (file in _filenessCache) {
+        return _filenessCache[file];
+    }
+    var result = fs.existsSync(file) && fs.statSync(file).isFile();
+    _filenessCache[file] = result;
+    return result;
 }
 
 function eachParent(file, callback) {
