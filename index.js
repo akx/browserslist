@@ -43,14 +43,20 @@ function fillUsage(result, name, data) {
     }
 }
 
+var cacheEnabled = !(
+    process && process.env && process.env.BROWSERSLIST_DISABLE_CACHE
+);
 var _filenessCache = {};
+var _configCache = {};
 
 function isFile(file) {
     if (file in _filenessCache) {
         return _filenessCache[file];
     }
     var result = fs.existsSync(file) && fs.statSync(file).isFile();
-    _filenessCache[file] = result;
+    if (cacheEnabled) {
+        _filenessCache[file] = result;
+    }
     return result;
 }
 
@@ -328,7 +334,18 @@ browserslist.readConfig = function (file) {
 
 // Find config, read file and parse it
 browserslist.findConfig = function (from) {
-    return eachParent(from, function (dir) {
+    if (from === false) {
+        return undefined;
+    }
+    if (from === undefined) {
+        from = path.resolve('.');
+    }
+    // If the `from` path is a file, use its directory as the cache key
+    var cacheKey = isFile(from) ? path.dirname(from) : from;
+    if (cacheKey in _configCache) {
+        return _configCache[cacheKey];
+    }
+    var resolved = eachParent(from, function (dir) {
         var config = path.join(dir, 'browserslist');
         var pkg = path.join(dir, 'package.json');
 
@@ -353,6 +370,10 @@ browserslist.findConfig = function (from) {
             return pkgBrowserslist;
         }
     });
+    if (cacheEnabled) {
+        _configCache[cacheKey] = resolved;
+    }
+    return resolved;
 };
 
 /**
@@ -407,6 +428,12 @@ browserslist.parseConfig = function (string) {
         });
 
     return result;
+};
+
+// Clear internal caches
+browserslist.clearCaches = function () {
+    _filenessCache = {};
+    _configCache = {};
 };
 
 browserslist.queries = {
